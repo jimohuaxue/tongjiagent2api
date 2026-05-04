@@ -1,0 +1,13 @@
+services:
+  web2api:
+    # platform: linux/arm64
+    build:
+      context: .
+    container_name: web2api
+    restart: unless-stopped
+    ports:
+      - '9000:9000'
+    shm_size: '1gb'
+    volumes:
+      # Stores config.yaml, db.sqlite3, browser profiles, and runtime state.
+      - ./docker-data:/data

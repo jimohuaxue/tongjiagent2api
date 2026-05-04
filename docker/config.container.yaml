@@ -1,0 +1,63 @@
+# Server configuration
+server:
+  # Host address to bind the server (0.0.0.0 listens on all interfaces)
+  host: '0.0.0.0'
+  # Port the server listens on
+  port: 9000
+
+auth:
+  # External API key. Leave empty to use the default: tongji-api-key.
+  # All /{type}/v1/* requests must include a matching key.
+  # Supports a single string, comma-separated string, or YAML list.
+  api_key: ''
+
+  # Console password hash/plain text.
+  # Leave empty for first-run UI initialization at /login.
+  # If set in plain text, it will be automatically hashed and written back to /data/config.yaml on first start.
+  config_secret: ''
+  # Maximum number of failed login attempts before locking
+  config_login_max_failures: 5
+  # Duration in seconds to lock the config page after too many failed attempts
+  config_login_lock_seconds: 600
+
+browser:
+  # Fixed path to fingerprint-chromium inside the container
+  chromium_bin: '/opt/fingerprint-chromium/chrome'
+
+  # Headless mode; Xvfb virtual display is used by default
+  headless: false
+
+  # Disable sandbox inside containers to prevent Chromium startup failures due to permission restrictions
+  no_sandbox: true
+
+  # GPU is typically unavailable in container environments; explicitly disable it
+  disable_gpu: true
+
+  # GPU sandbox can also cause issues in some container environments
+  disable_gpu_sandbox: true
+
+  # Starting port number for CDP (Chrome DevTools Protocol) connections
+  cdp_port_start: 9222
+  # Number of CDP ports available
+  cdp_port_count: 20
+
+  # CDP readiness wait settings (tune for slow/cold starts in Docker)
+  # Total wait time ≈ cdp_wait_max_attempts * cdp_wait_interval_seconds
+  cdp_wait_max_attempts: 60
+  cdp_wait_interval_seconds: 2.0
+  # Per-attempt TCP connect timeout when probing the CDP port
+  cdp_wait_connect_timeout_seconds: 2.0
+
+scheduler:
+  # Maximum number of tabs allowed to run concurrently
+  tab_max_concurrent: 5
+  # Interval in seconds for browser garbage collection
+  browser_gc_interval_seconds: 300
+  # Seconds of inactivity before a tab is considered idle
+  tab_idle_seconds: 900
+  # Number of browser instances to keep resident (pre-warmed)
+  resident_browser_count: 1
+
+mock:
+  # Port for the mock server
+  port: 8002

@@ -1,0 +1,107 @@
+server:
+  # 监听地址 / Listening address
+  # 本机开发建议 127.0.0.1；Docker/容器内建议 0.0.0.0
+  # Use 127.0.0.1 for local dev; use 0.0.0.0 inside Docker/container
+  host: '127.0.0.1'
+  port: 9000
+
+auth:
+  # 对外 API Key：留空表示使用默认 tongji-api-key；所有 /{type}/v1/* 请求都必须带匹配的 API Key。
+  # External API Key: leave empty to use default tongji-api-key; all /{type}/v1/* requests must carry a matching API Key.
+  # 推荐客户端使用 / Recommended client usage:
+  #   Authorization: Bearer <api_key>
+  # 支持三种写法 / Supports three formats:
+  #   api_key: "key-1"
+  #   api_key: "key-1,key-2"
+  #   api_key:
+  #     - "key-1"
+  #     - "key-2"
+  # 仅保护 OpenAI 兼容接口，不用于配置页登录。/ Only protects OpenAI-compatible endpoints; not used for config page login.
+  # 可在控制台“API 设置”页面修改。/ Can be changed in the console "API Settings" page.
+  api_key: ''
+
+  # 控制台登录密码：留空时首次访问 /login 会进入初始化；填写明文后，项目启动时会自动转换成哈希并回写到当前 config.yaml。
+  # Console password: leave empty for first-run setup at /login; plain text will be auto-hashed and written back to config.yaml on startup.
+  # 之后访问 /config 时，需要先到 /login 输入控制台密码。
+  # To access /config, go to /login first and enter the console password.
+  # 修改 secret 的方式：把这里重新改成新的明文，再重启服务；启动后会再次自动哈希。
+  # To change the secret: replace this with new plain text, then restart; it will be re-hashed on startup.
+  # 注意：如果未配置 config_secret，/login 会让用户先设置控制台密码。
+  # Note: if config_secret is not set, /login asks the user to set a console password first.
+  config_secret: ''
+  # 配置页登录失败保护：按来源 IP 统计，连续失败达到阈值后临时锁定。
+  # Login failure protection: tracked per source IP; temporarily locked after consecutive failures reach the threshold.
+  config_login_max_failures: 5
+  config_login_lock_seconds: 600
+
+browser:
+  # 指纹浏览器（fingerprint-chromium）可执行文件路径
+  # Path to the fingerprint-chromium executable
+  # 留空则使用默认值：macOS /Applications/Chromium.app/Contents/MacOS/Chromium
+  # Leave empty to use the default: macOS /Applications/Chromium.app/Contents/MacOS/Chromium
+  # Linux 示例：/usr/bin/chromium 或 /opt/fingerprint-chromium/chrome
+  # Linux examples: /usr/bin/chromium or /opt/fingerprint-chromium/chrome
+  chromium_bin: ''
+
+  # 是否启用无头模式（headless）/ Whether to enable headless mode
+  # 默认 false。优先推荐 Linux + Xvfb，这样仍然是"有界面浏览器"，兼容性更稳。
+  # Default false. Linux + Xvfb is preferred — keeps a visible browser with better compatibility.
+  # headless 只建议用于检测不严格、页面行为简单的平台。
+  # Headless is only recommended for platforms with lenient detection and simple page behavior.
+  # 对 Claude 这类检测更严格的平台，不推荐优先开启；可能出现扩展失效、登录态异常或更高风控风险。
+  # Not recommended for stricter platforms like Claude; may cause extension failures, session issues, or higher risk triggers.
+  headless: false
+
+  # 是否禁用 Chromium sandbox / Whether to disable Chromium sandbox
+  # 默认 false。只有在 Docker 等受限环境、且浏览器因 sandbox 无法启动时再开启。
+  # Default false. Only enable in restricted environments (e.g. Docker) where the browser fails to start due to sandbox.
+  # 开启后安全性会下降，但容器内通常更容易稳定启动浏览器。
+  # Enabling reduces security, but typically allows stable browser startup inside containers.
+  no_sandbox: false
+
+  # 是否显式禁用 GPU / Whether to explicitly disable GPU
+  # 默认 false。Linux 容器、远程桌面、Xvfb 等环境里，如果浏览器出现 GPU 相关崩溃，可尝试开启。
+  # Default false. Try enabling in Linux containers, remote desktops, or Xvfb if GPU-related crashes occur.
+  # 注意：这更像兼容性开关，不保证解决所有环境问题；对 Apple Silicon Docker + x86_64 浏览器这类跨架构场景尤其如此。
+  # Note: compatibility switch only; does not guarantee fixes for all envs, especially cross-arch (Apple Silicon + x86_64).
+  disable_gpu: false
+
+  # 是否禁用 GPU sandbox / Whether to disable GPU sandbox
+  # 默认 false。仅在浏览器日志明确指向 GPU 进程 / GPU sandbox 问题时再开启。
+  # Default false. Only enable when browser logs explicitly point to GPU process / GPU sandbox issues.
+  # 建议和 disable_gpu 配合排查；正常桌面环境通常不需要。
+  # Recommended alongside disable_gpu for troubleshooting; not needed in normal desktop environments.
+  disable_gpu_sandbox: false
+
+  # CDP 端口池：每个浏览器进程占用一个端口 / CDP port pool: one port per browser process
+  # cdp_port_start: 起始端口（默认 9223）/ Start port (default 9223)
+  # cdp_port_count: 端口数量，即最多可并发的浏览器数（默认 20）/ Port count = max concurrent browsers (default 20)
+  cdp_port_start: 9223
+  cdp_port_count: 20
+
+  # CDP readiness wait settings (tune for slow/cold starts in Docker)
+  # Total wait time ≈ cdp_wait_max_attempts * cdp_wait_interval_seconds
+  cdp_wait_max_attempts: 60
+  cdp_wait_interval_seconds: 2.0
+  # Per-attempt TCP connect timeout when probing the CDP port
+  cdp_wait_connect_timeout_seconds: 2.0
+
+scheduler:
+  # 单个 type tab 同时允许的最大请求数。
+  # Maximum concurrent requests allowed per type tab.
+  # 达到上限后，新请求会优先分流到其他已打开浏览器，必要时再拉起新浏览器。
+  # When the limit is reached, new requests are routed to other open browsers; a new one is launched only if necessary.
+  tab_max_concurrent: 5
+
+  # 浏览器空闲回收扫描周期（秒）/ Browser idle GC scan interval (seconds)
+  browser_gc_interval_seconds: 300
+
+  # 一个浏览器下所有 tab 在这段时间内都没有请求时，视为可回收（秒）
+  # A browser is reclaimable when all its tabs have been idle for this duration (seconds)
+  tab_idle_seconds: 900
+
+  # 最少保留多少个浏览器进程不参与回收 / Minimum number of browser processes to keep alive (exempt from GC)
+  resident_browser_count: 1
+
+mock:
+  port: 8002

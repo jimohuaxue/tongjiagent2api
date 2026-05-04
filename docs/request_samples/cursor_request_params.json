@@ -1,0 +1,62 @@
+{
+  "model": "claude-sonnet-4-5-20250929",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "请阅读 README.md，并总结这个项目的启动方式。"
+        }
+      ]
+    }
+  ],
+  "stream": true,
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "Read",
+        "description": "Read a local project file by relative path.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string",
+              "description": "Relative file path, for example README.md."
+            }
+          },
+          "required": [
+            "file_path"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "Bash",
+        "description": "Run a safe project command.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to run, for example uv run pytest."
+            },
+            "description": {
+              "type": "string",
+              "description": "Short human-readable purpose of the command."
+            }
+          },
+          "required": [
+            "command"
+          ]
+        }
+      }
+    }
+  ],
+  "tool_choice": {
+    "type": "auto"
+  }
+}

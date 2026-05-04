@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Web2API 同济控制台</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --panel-2: #eef2f6;
+        --border: #d9e0e8;
+        --text: #18202a;
+        --muted: #667085;
+        --accent: #1f6feb;
+        --accent-2: #0f766e;
+        --danger: #c2410c;
+        --danger-bg: #fff7ed;
+        --success-bg: #ecfdf5;
+        --success-text: #047857;
+        --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+      }
+
+      .shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        background: #101820;
+        color: #e5edf5;
+        padding: 20px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .brand {
+        padding: 0 8px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 18px;
+        letter-spacing: 0;
+      }
+
+      .brand span {
+        display: block;
+        margin-top: 4px;
+        color: #9fb0c2;
+        font-size: 12px;
+      }
+
+      .nav {
+        display: grid;
+        gap: 6px;
+      }
+
+      .nav button {
+        width: 100%;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 8px;
+        background: transparent;
+        color: #c9d6e2;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .nav button:hover,
+      .nav button.active {
+        background: #1b2a38;
+        color: #fff;
+      }
+
+      .nav svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        display: grid;
+        gap: 8px;
+        padding: 0 4px;
+      }
+
+      .sidebar-footer button {
+        min-height: 38px;
+        border-radius: 8px;
+        background: #1b2a38;
+        color: #e5edf5;
+        cursor: pointer;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 22px 26px 32px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .title h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .title p {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .connection-bar {
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 6px 0 12px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #e5e9f0;
+      }
+
+      .connection-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .connection-url {
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border: 0;
+        background: transparent;
+        color: #1d2129;
+        font-size: 13px;
+        line-height: 24px;
+        cursor: pointer;
+      }
+
+      .btn {
+        min-height: 36px;
+        padding: 8px 13px;
+        border-radius: 8px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        border-color: #b8c4d2;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: #1a5fcc;
+        border-color: #1a5fcc;
+      }
+
+      .btn-danger {
+        background: var(--danger-bg);
+        border-color: #fed7aa;
+        color: var(--danger);
+      }
+
+      .btn-sm {
+        min-height: 32px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .metric {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: var(--shadow);
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 24px;
+      }
+
+      .usage-metrics .metric {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .metric-icon {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        color: #1f6feb;
+        background: #eef4ff;
+      }
+
+      .metric-icon.green {
+        color: #0f766e;
+        background: #dffaf5;
+      }
+
+      .metric-icon.amber {
+        color: #a15c00;
+        background: #fff1c2;
+      }
+
+      .metric-icon.red {
+        color: #c2410c;
+        background: #fee2e2;
+      }
+
+      .metric small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .usage-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 14px 16px;
+      }
+
+      .usage-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .usage-controls select {
+        width: auto;
+        min-width: 116px;
+      }
+
+      .usage-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) minmax(420px, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .usage-card {
+        min-height: 260px;
+      }
+
+      .chart-wrap {
+        width: 100%;
+        min-height: 222px;
+        display: grid;
+        place-items: center;
+      }
+
+      .usage-chart {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      #usageTrend {
+        width: 100%;
+        height: 220px;
+      }
+
+      .model-usage-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .model-usage-table th,
+      .model-usage-table td {
+        padding: 8px 6px;
+        border-bottom: 1px solid #eef1f5;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .model-usage-table th:first-child,
+      .model-usage-table td:first-child {
+        text-align: left;
+      }
+
+      .model-usage-table th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .recent-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .recent-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 16px;
+        align-items: center;
+        min-height: 58px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        background: #f8fafc;
+      }
+
+      .recent-main strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .recent-main span,
+      .recent-meta span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .recent-cost {
+        color: #039855;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .panel-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .panel-body {
+        padding: 16px;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 160px;
+        gap: 10px;
+        align-items: end;
+      }
+
+      label {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 5px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        padding: 8px 10px;
+      }
+
+      input:focus,
+      select:focus {
+        outline: 2px solid rgba(31, 111, 235, 0.18);
+        border-color: var(--accent);
+      }
+
+      input[type="checkbox"] {
+        width: 16px;
+        min-height: 16px;
+        padding: 0;
+      }
+
+      .section {
+        display: none;
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      .model-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(292px, 1fr));
+        gap: 16px;
+      }
+
+      .model-card {
+        position: relative;
+        display: flex;
+        min-height: 206px;
+        height: 100%;
+        flex-direction: column;
+        word-break: break-all;
+        color: #4e5969;
+        border: 1px solid #eaedf1;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+        transition:
+          border-color 0.16s linear,
+          box-shadow 0.16s linear,
+          transform 0.16s linear;
+      }
+
+      .model-card:hover {
+        border-color: #c9d8f2;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .model-card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 18px 18px 0;
+      }
+
+      .model-avatar {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #eef4ff;
+      }
+
+      .model-avatar img {
+        width: 22px;
+        height: 22px;
+        display: block;
+      }
+
+      .model-heading {
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .model-title-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .model-card h3 {
+        margin: 0;
+        min-width: 0;
+        flex: 1 1 auto;
+        color: #1d2129;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 22px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .model-vendor {
+        margin-top: 4px;
+        color: #86909c;
+        font-size: 12px;
+        line-height: 20px;
+      }
+
+      .model-id {
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        word-break: break-word;
+      }
+
+      .model-card-body {
+        flex: 1 1 auto;
+        display: grid;
+        gap: 10px;
+        padding: 12px 18px 0;
+      }
+
+      .model-desc {
+        min-height: 40px;
+        margin: 0;
+        color: #86909c;
+        font-size: 12px;
+        line-height: 20px;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+
+      .model-meta {
+        display: grid;
+        grid-template-columns: 74px minmax(0, 1fr);
+        gap: 6px 10px;
+        color: #86909c;
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .model-meta span:nth-child(2n) {
+        min-width: 0;
+        color: #4e5969;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .model-card-footer {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 18px 18px;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        min-width: 0;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        height: 20px;
+        min-height: 20px;
+        padding: 0 6px;
+        gap: 4px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        background: #f2f3f5;
+        color: #4e5969;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 18px;
+        white-space: nowrap;
+      }
+
+      .tag img {
+        width: 12px;
+        height: 12px;
+        flex: 0 0 auto;
+        display: block;
+      }
+
+      .tag span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tag.vision {
+        background: rgba(44, 147, 97, 0.12);
+        color: #2c9361;
+      }
+
+      .tag.reasoning {
+        background: rgba(57, 115, 229, 0.12);
+        color: #3973e5;
+      }
+
+      .tag.code {
+        background: rgba(114, 46, 209, 0.12);
+        color: #722ed1;
+      }
+
+      .tag.context {
+        background: rgba(20, 162, 184, 0.12);
+        color: #0e8ca0;
+      }
+
+      .tag.api {
+        background: rgba(44, 147, 97, 0.12);
+        color: #2c9361;
+      }
+
+      .tag.running {
+        background: rgba(0, 168, 112, 0.12);
+        color: #00a870;
+      }
+
+      .model-copy {
+        width: 28px;
+        height: 28px;
+        min-height: 28px;
+        flex: 0 0 auto;
+        padding: 0;
+        border-radius: 6px;
+        color: #737a87;
+      }
+
+      .model-copy:hover {
+        background: #e3e9f5;
+        border-color: #d7e0ef;
+        color: #1f6feb;
+      }
+
+      .account-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .account-row {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fff;
+        display: grid;
+        gap: 12px;
+      }
+
+      .account-row-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .account-row-head strong {
+        font-size: 15px;
+      }
+
+      .account-fields {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) 150px;
+        gap: 10px;
+      }
+
+      .switch {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 36px;
+        color: var(--text);
+        margin: 0;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: #344054;
+      }
+
+      .status.active {
+        background: var(--success-bg);
+        border-color: #bbf7d0;
+        color: var(--success-text);
+      }
+
+      .status.frozen {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+      }
+
+      .status.disabled {
+        color: #667085;
+      }
+
+      .proxy-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .proxy-group {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .proxy-fields {
+        display: grid;
+        grid-template-columns: 120px minmax(180px, 1.1fr) minmax(180px, 1.4fr) minmax(150px, 1fr) 110px minmax(150px, 1fr);
+        gap: 10px;
+        align-items: end;
+      }
+
+      .empty {
+        border: 1px dashed #b8c4d2;
+        border-radius: 8px;
+        padding: 28px 16px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .toast {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 30;
+        display: none;
+        max-width: min(520px, calc(100vw - 32px));
+        padding: 11px 14px;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        background: #102a43;
+        color: #fff;
+      }
+
+      .toast.error {
+        background: #7f1d1d;
+      }
+
+      .toast.success {
+        background: #065f46;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      @media (max-width: 980px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: sticky;
+          top: 0;
+          z-index: 20;
+          padding: 12px;
+        }
+
+        .brand {
+          display: none;
+        }
+
+        .nav {
+          grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+        }
+
+        .sidebar-footer {
+          display: none;
+        }
+
+        .main {
+          padding: 18px 14px 28px;
+        }
+
+        .metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .actions {
+          width: 100%;
+          justify-content: flex-start;
+        }
+
+        .connection-url {
+          max-width: min(52vw, 260px);
+        }
+
+        .account-fields,
+        .proxy-fields,
+        .filters {
+          grid-template-columns: 1fr;
+        }
+
+        .model-card-footer {
+          align-items: flex-start;
+        }
+
+        .usage-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .usage-toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast" class="toast"></div>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <strong>Web2API</strong>
+          <span>同济 MaaS 控制台</span>
+        </div>
+        <nav class="nav" aria-label="主导航">
+          <button type="button" class="active" data-section="models" title="模型广场">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>模型广场</span>
+          </button>
+          <button type="button" data-section="usage" title="用量统计">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 19V5m4 14v-7m4 7V8m4 11v-4m2 4H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>用量统计</span>
+          </button>
+          <button type="button" data-section="accounts" title="同济账号">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>同济账号</span>
+          </button>
+          <button type="button" data-section="network" title="代理设置">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 8h12M8 16h8M12 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>代理设置</span>
+          </button>
+          <button type="button" data-section="api" title="API 设置">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 1 0-7.07-7.07L10.5 5.43" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 1 0 7.07 7.07l1.62-1.62" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>API 设置</span>
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button type="button" id="reloadSide">重新加载</button>
+          <button type="button" id="saveSide">保存配置</button>
+          <button type="button" id="logoutSide">退出登录</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="title">
+            <h1 id="pageTitle">模型广场</h1>
+            <p id="pageSubtitle">浏览同济 MaaS 当前可用模型，并复制 OpenAI 兼容模型名。</p>
+          </div>
+          <div class="actions">
+            <div class="connection-bar" aria-label="连接状态">
+              <span class="connection-link">
+                <button type="button" class="connection-url" id="connectionUrl" title="复制连接地址">http://localhost</button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <section class="metrics" aria-label="配置概览">
+          <div class="metric"><span>模型</span><strong id="metricModels">0</strong></div>
+          <div class="metric"><span>同济账号</span><strong id="metricAccounts">0</strong></div>
+          <div class="metric"><span>启用账号</span><strong id="metricEnabled">0</strong></div>
+          <div class="metric"><span>代理组</span><strong id="metricGroups">0</strong></div>
+        </section>
+
+        <section class="section active" id="section-models">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>模型广场</h2>
+              <div class="filters">
+                <div>
+                  <label for="modelSearch">搜索模型</label>
+                  <input id="modelSearch" type="search" placeholder="GLM、Qwen、DeepSeek、VL..." />
+                </div>
+                <div>
+                  <label for="modelKind">筛选</label>
+                  <select id="modelKind">
+                    <option value="">全部模型</option>
+                    <option value="vision">视觉模型</option>
+                    <option value="reasoning">推理模型</option>
+                    <option value="code">代码模型</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div id="modelList" class="model-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-usage">
+          <section class="metrics usage-metrics" aria-label="用量概览">
+            <div class="metric">
+              <div class="metric-icon amber">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" stroke="currentColor" stroke-width="2"/><path d="m8 9.5 4 2.2 4-2.2M12 12v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div><span>窗口 Token</span><strong id="usageWindowTokens">0</strong><small id="usageWindowSplit">输入 0 / 输出 0</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M4 7a8 3 0 1 0 16 0A8 3 0 1 0 4 7Zm0 0v10a8 3 0 1 0 16 0V7" stroke="currentColor" stroke-width="2"/><path d="M4 12a8 3 0 1 0 16 0" stroke="currentColor" stroke-width="2"/></svg>
+              </div>
+              <div><span>累计 Token</span><strong id="usageTotalTokens">0</strong><small id="usageTotalHint">本地记录</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-icon green">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              </div>
+              <div><span>性能指标</span><strong id="usageRequests">0</strong><small id="usageTpm">0 TPM</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-icon red">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div><span>平均响应</span><strong id="usageLatency">0s</strong><small>平均时间</small></div>
+            </div>
+          </section>
+
+          <div class="panel usage-toolbar">
+            <div class="usage-controls">
+              <span>时间范围：</span>
+              <select id="usageDays" aria-label="用量统计时间范围">
+                <option value="7">近 7 天</option>
+                <option value="30">近 30 天</option>
+                <option value="90">近 90 天</option>
+              </select>
+              <button type="button" class="btn" id="refreshUsage">刷新</button>
+            </div>
+            <div class="usage-controls">
+              <span>粒度：</span>
+              <select id="usageGranularity" aria-label="用量统计粒度">
+                <option value="day">按天</option>
+                <option value="hour">按小时</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="usage-grid">
+            <div class="panel usage-card">
+              <div class="panel-head"><h2>模型分布</h2></div>
+              <div class="panel-body">
+                <div class="chart-wrap"><canvas id="usageDonut" class="usage-chart" width="420" height="220"></canvas></div>
+              </div>
+            </div>
+            <div class="panel usage-card">
+              <div class="panel-head"><h2>Token 使用趋势</h2></div>
+              <div class="panel-body">
+                <div class="chart-wrap"><canvas id="usageTrend" class="usage-chart" width="620" height="220"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="usage-grid">
+            <div class="panel">
+              <div class="panel-head"><h2>模型明细</h2></div>
+              <div class="panel-body">
+                <div id="usageModels"></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>最近使用</h2><span class="status">窗口内</span></div>
+              <div class="panel-body">
+                <div id="usageRecent" class="recent-list"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-accounts">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>同济账号登录</h2>
+              <button type="button" class="btn btn-primary" id="addTongjiAccount">新增账号</button>
+            </div>
+            <div class="panel-body">
+              <div id="accountList" class="account-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-network">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>代理设置</h2>
+              <button type="button" class="btn btn-primary" id="addProxyGroup">新增代理组</button>
+            </div>
+            <div class="panel-body">
+              <div id="proxyList" class="proxy-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-api">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>API 设置</h2>
+              <button type="button" class="btn btn-primary" id="saveApiSettings">保存 API Key</button>
+            </div>
+            <div class="panel-body grid">
+              <div>
+                <label for="apiEndpoint">OpenAI 兼容端点</label>
+                <div class="connection-bar" style="height: 38px; width: 100%; border-radius: 8px">
+                  <button type="button" class="connection-url mono" id="apiEndpoint" title="复制连接地址" style="max-width: none; width: 100%; text-align: left">http://localhost</button>
+                </div>
+              </div>
+              <div>
+                <label for="apiKeyInput">API Key</label>
+                <input id="apiKeyInput" type="text" autocomplete="off" placeholder="留空保存将使用默认 API Key" />
+              </div>
+              <div class="account-row-head">
+                <span class="model-id" id="apiDefaultHint">默认 API Key：tongji-api-key</span>
+                <button type="button" class="btn btn-sm" id="generateApiKey">随机生成</button>
+                <button type="button" class="btn btn-sm" id="copyApiKey">复制 API Key</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const CONFIG_API = '/api/config'
+      const STATUS_API = '/api/config/status'
+      const MODELS_API = '/api/tongji/models'
+      const USAGE_API = '/api/usage'
+      const ADMIN_SETTINGS_API = '/api/admin/settings'
+      const TONGJI_TAG_ASSET_BASE = '/assets/tongji/tags'
+      const TAG_ICONS = {
+        api: 'api.svg',
+        code: 'code.svg',
+        context: 'context.svg',
+        reasoning: 'reasoning.svg',
+        running: 'running.svg',
+        tag: 'tag.svg',
+        text: 'text.svg',
+        vision: 'vision.svg',
+      }
+
+      let config = []
+      let models = []
+      let runtimeStatus = {}
+      let runtimeNow = Math.trunc(Date.now() / 1000)
+      let usage = null
+      let apiSettings = { api_key: 'tongji-api-key', default_api_key: 'tongji-api-key' }
+
+      const TIMEZONES = (() => {
+        if (typeof Intl !== 'undefined' && Intl.supportedValuesOf) {
+          try {
+            return Intl.supportedValuesOf('timeZone').sort()
+          } catch (_) {}
+        }
+        return ['Asia/Shanghai', 'Asia/Hong_Kong', 'Asia/Tokyo', 'America/Los_Angeles', 'America/New_York', 'Europe/London', 'UTC']
+      })()
+
+      function iconCopy() {
+        return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true"><path d="M8 8h10v12H8zM6 16H4V4h12v2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+      }
+
+      function toast(message, type = 'success') {
+        const el = document.getElementById('toast')
+        el.textContent = message
+        el.className = `toast ${type}`
+        el.style.display = 'block'
+        setTimeout(() => {
+          el.style.display = 'none'
+        }, 3600)
+      }
+
+      async function apiFetch(url, options = {}) {
+        const res = await fetch(url, options)
+        if (res.status === 401) {
+          window.location.href = '/login'
+          throw new Error('登录已失效')
+        }
+        return res
+      }
+
+      async function copyText(value, successMessage) {
+        try {
+          await navigator.clipboard.writeText(value)
+          toast(successMessage)
+        } catch (_) {
+          const input = document.createElement('input')
+          input.value = value
+          input.style.position = 'fixed'
+          input.style.left = '-9999px'
+          document.body.appendChild(input)
+          input.focus()
+          input.select()
+          try {
+            document.execCommand('copy')
+            toast(successMessage)
+          } catch (err) {
+            toast(value)
+          } finally {
+            input.remove()
+          }
+        }
+      }
+
+      function initConnectionBar() {
+        const value = `${window.location.origin}/openai/tongji/v1`
+        const urlEl = document.getElementById('connectionUrl')
+        urlEl.textContent = value
+        urlEl.title = `复制 API 端点：${value}`
+        const copy = () => copyText(value, `已复制 API 端点：${value}`)
+        urlEl.onclick = copy
+        const endpointEl = document.getElementById('apiEndpoint')
+        endpointEl.textContent = value
+        endpointEl.title = `复制 API 端点：${value}`
+        endpointEl.onclick = copy
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+      }
+
+      function formatNumber(value) {
+        const n = Number(value || 0)
+        if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`
+        if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+        if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+        return String(Math.round(n))
+      }
+
+      function formatDateTime(ts) {
+        if (!ts) return ''
+        return new Date(Number(ts) * 1000).toLocaleString('zh-CN', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      }
+
+      function normalizeGroup(group) {
+        return {
+          use_proxy: group.use_proxy !== false,
+          proxy_host: group.proxy_host || '',
+          proxy_user: group.proxy_user || '',
+          proxy_pass: group.proxy_pass || '',
+          fingerprint_id: group.fingerprint_id || '',
+          timezone: group.timezone || 'Asia/Shanghai',
+          accounts: Array.isArray(group.accounts) ? group.accounts : [],
+        }
+      }
+
+      function tongjiAccounts() {
+        const rows = []
+        config.forEach((group, groupIndex) => {
+          ;(group.accounts || []).forEach((account, accountIndex) => {
+            if ((account.type || '').toLowerCase() === 'tongji') {
+              rows.push({ group, groupIndex, account, accountIndex })
+            }
+          })
+        })
+        return rows
+      }
+
+      function accountKey(group, account) {
+        return `${group.fingerprint_id || ''}:${account.name || ''}`
+      }
+
+      function statusFor(group, account) {
+        const runtime = runtimeStatus[accountKey(group, account)] || {}
+        const enabled = account.enabled !== false
+        const unfreezeAt = Number(runtime.unfreeze_at ?? account.unfreeze_at ?? 0)
+        if (!enabled) return { cls: 'disabled', text: '已停用' }
+        if (unfreezeAt && unfreezeAt > runtimeNow) return { cls: 'frozen', text: '冻结中' }
+        if (runtime.is_active) return { cls: 'active', text: '运行中' }
+        return { cls: '', text: '待机' }
+      }
+
+      function inferModelVendor(model) {
+        const text = `${model.id} ${model.name}`.toLowerCase()
+        if (text.includes('deepseek')) return 'DeepSeek'
+        if (text.includes('qwen') || text.includes('tongyi')) return '通义千问'
+        if (text.includes('glm')) return '智谱 AI'
+        if (text.includes('kimi')) return 'Moonshot AI'
+        if (text.includes('minimax')) return 'MiniMax'
+        if (text.includes('gemma')) return 'Google Gemma'
+        if (text.includes('intern')) return 'InternLM'
+        return '同济 MaaS'
+      }
+
+      function inferModelFamily(model) {
+        const title = String(model.name || model.id || '模型')
+        if (/deepseek/i.test(title)) return 'DeepSeek'
+        if (/qwen/i.test(title)) return 'Qwen'
+        if (/glm/i.test(title)) return 'GLM'
+        if (/kimi/i.test(title)) return 'Kimi'
+        if (/gemma/i.test(title)) return 'Gemma'
+        return title.split(/[-_ ]+/)[0] || '基础模型'
+      }
+
+      function inferModelTags(model) {
+        const text = `${model.id} ${model.name}`.toLowerCase()
+        const tags = [{ key: 'running', label: '运行中' }]
+        if (text.includes('vl') || text.includes('vision') || text.includes('image')) {
+          tags.push({ key: 'vision', label: '视觉理解' })
+        } else {
+          tags.push({ key: 'text', label: '文本生成' })
+        }
+        if (text.includes('thinking') || text.includes('r1') || text.includes('reason')) {
+          tags.push({ key: 'reasoning', label: '深度推理' })
+        }
+        if (text.includes('coder') || text.includes('code')) {
+          tags.push({ key: 'code', label: '代码能力' })
+        }
+        if (text.includes('long') || text.includes('deepresearch') || text.includes('l1.5')) {
+          tags.push({ key: 'context', label: '长上下文' })
+        }
+        tags.push({ key: 'api', label: 'OpenAI 兼容' })
+        return tags.filter((tag, index) => tags.findIndex((item) => item.key === tag.key) === index)
+      }
+
+      function renderTag(tag) {
+        const key = tag.key || 'tag'
+        const icon = tag.icon || TAG_ICONS[key] || TAG_ICONS.tag
+        return `
+          <span class="tag ${escapeHtml(key)}">
+            <img src="${TONGJI_TAG_ASSET_BASE}/${escapeHtml(icon)}" alt="" loading="lazy" />
+            <span>${escapeHtml(tag.label)}</span>
+          </span>
+        `
+      }
+
+      function primaryCapability(tags) {
+        const capability = tags.find((tag) => ['vision', 'text', 'reasoning', 'code'].includes(tag.key))
+        return capability ? capability.label : '基础模型'
+      }
+
+      function modelDescription(model, tags) {
+        if (model.description) return model.description
+        const capability = primaryCapability(tags)
+        const vendor = inferModelVendor(model)
+        return `${vendor} ${capability}模型，已在同济 MaaS 模型广场发布。`
+      }
+
+      function renderMetrics() {
+        const accounts = tongjiAccounts()
+        document.getElementById('metricModels').textContent = String(models.length)
+        document.getElementById('metricAccounts').textContent = String(accounts.length)
+        document.getElementById('metricEnabled').textContent = String(
+          accounts.filter((row) => row.account.enabled !== false).length
+        )
+        document.getElementById('metricGroups').textContent = String(config.length)
+      }
+
+      function renderUsage() {
+        const totals = usage?.totals || {}
+        const totalsAllTime = usage?.totals_all_time || totals
+        const buckets = usage?.buckets || []
+        const totalTokens = Number(totals.tokens || 0)
+        const inputTokens = Number(totals.input_tokens || 0)
+        const outputTokens = Number(totals.output_tokens || 0)
+        const windowMinutes = Math.max(1, Number(usage?.window_days || 7) * 24 * 60)
+        document.getElementById('usageWindowTokens').textContent = formatNumber(totalTokens)
+        document.getElementById('usageWindowSplit').textContent = `输入 ${formatNumber(inputTokens)} / 输出 ${formatNumber(outputTokens)}`
+        document.getElementById('usageTotalTokens').textContent = formatNumber(totalsAllTime.tokens || 0)
+        document.getElementById('usageTotalHint').textContent = `全量 ${formatNumber(totalsAllTime.requests || 0)} 次请求`
+        document.getElementById('usageRequests').textContent = String(totals.requests || 0)
+        document.getElementById('usageTpm').textContent = `${formatNumber(totals.errors || 0)} 错误 / ${formatNumber(totalTokens / windowMinutes)} TPM`
+        document.getElementById('usageLatency').textContent = `${Number(totals.avg_latency_seconds || 0).toFixed(2)}s`
+        renderUsageModels()
+        renderUsageRecent()
+        drawUsageDonut(usage?.models || [])
+        drawUsageTrend(buckets)
+      }
+
+      function renderApiSettings() {
+        const apiKey = apiSettings.api_key || apiSettings.default_api_key || 'tongji-api-key'
+        const defaultKey = apiSettings.default_api_key || 'tongji-api-key'
+        document.getElementById('apiKeyInput').value = apiKey
+        document.getElementById('apiDefaultHint').textContent = `默认 API Key：${defaultKey}`
+      }
+
+      function renderUsageModels() {
+        const target = document.getElementById('usageModels')
+        const rows = usage?.models || []
+        if (!rows.length) {
+          target.innerHTML = '<div class="empty">还没有用量记录</div>'
+          return
+        }
+        target.innerHTML = `
+          <table class="model-usage-table">
+            <thead><tr><th>模型</th><th>请求</th><th>Token</th><th>输入</th><th>输出</th><th>平均</th></tr></thead>
+            <tbody>
+              ${rows.map((row) => `
+                <tr>
+                  <td class="mono">${escapeHtml(row.model)}</td>
+                  <td>${formatNumber(row.requests)}</td>
+                  <td>${formatNumber(row.tokens)}</td>
+                  <td>${formatNumber(row.input_tokens)}</td>
+                  <td>${formatNumber(row.output_tokens)}</td>
+                  <td>${Number(row.avg_latency_seconds || 0).toFixed(2)}s</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `
+      }
+
+      function renderUsageRecent() {
+        const target = document.getElementById('usageRecent')
+        const rows = usage?.recent || []
+        if (!rows.length) {
+          target.innerHTML = '<div class="empty">还没有请求记录</div>'
+          return
+        }
+        target.innerHTML = rows.slice(0, 8).map((row) => `
+          <div class="recent-item">
+            <div class="recent-main">
+              <strong>${escapeHtml(row.model || 'unknown')}</strong>
+              <span>${formatDateTime(row.started_at)} · ${escapeHtml(row.provider)} · ${escapeHtml(row.protocol)} · ${escapeHtml(row.status)}</span>
+              ${row.account_id ? `<span>${escapeHtml(row.account_id)}</span>` : ''}
+            </div>
+            <div class="recent-meta">
+              <div class="recent-cost">${formatNumber(row.total_tokens)} tokens</div>
+              <span>${(Number(row.latency_ms || 0) / 1000).toFixed(2)}s</span>
+            </div>
+          </div>
+        `).join('')
+      }
+
+      function drawUsageDonut(rows) {
+        const canvas = document.getElementById('usageDonut')
+        const ctx = canvas.getContext('2d')
+        const width = canvas.width
+        const height = canvas.height
+        ctx.clearRect(0, 0, width, height)
+        if (!rows.length) {
+          drawCanvasEmpty(ctx, width, height, '暂无模型用量')
+          return
+        }
+        const colors = ['#3b82f6', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b']
+        const total = rows.reduce((sum, row) => sum + Number(row.tokens || 0), 0) || 1
+        const cx = 96
+        const cy = 110
+        const r = 72
+        const inner = 44
+        let start = -Math.PI / 2
+        rows.slice(0, 6).forEach((row, index) => {
+          const angle = (Number(row.tokens || 0) / total) * Math.PI * 2
+          ctx.beginPath()
+          ctx.moveTo(cx, cy)
+          ctx.arc(cx, cy, r, start, start + angle)
+          ctx.closePath()
+          ctx.fillStyle = colors[index % colors.length]
+          ctx.fill()
+          start += angle
+        })
+        ctx.beginPath()
+        ctx.arc(cx, cy, inner, 0, Math.PI * 2)
+        ctx.fillStyle = '#fff'
+        ctx.fill()
+        ctx.fillStyle = '#18202a'
+        ctx.font = '600 16px system-ui'
+        ctx.textAlign = 'center'
+        ctx.fillText(formatNumber(total), cx, cy + 4)
+        ctx.textAlign = 'left'
+        rows.slice(0, 5).forEach((row, index) => {
+          const y = 62 + index * 28
+          ctx.fillStyle = colors[index % colors.length]
+          ctx.fillRect(220, y - 10, 10, 10)
+          ctx.fillStyle = '#18202a'
+          ctx.font = '12px system-ui'
+          ctx.fillText(String(row.model || 'unknown').slice(0, 24), 238, y)
+          ctx.fillStyle = '#667085'
+          ctx.fillText(formatNumber(row.tokens), 238, y + 14)
+        })
+      }
+
+      function drawUsageTrend(rows) {
+        const canvas = document.getElementById('usageTrend')
+        const ctx = canvas.getContext('2d')
+        const width = canvas.width
+        const height = canvas.height
+        ctx.clearRect(0, 0, width, height)
+        if (!rows.length) {
+          drawCanvasEmpty(ctx, width, height, '暂无趋势数据')
+          return
+        }
+        const pad = { left: 54, right: 18, top: 18, bottom: 34 }
+        const plotW = width - pad.left - pad.right
+        const plotH = height - pad.top - pad.bottom
+        const series = [
+          { key: 'input_tokens', color: '#3b82f6', label: 'Input' },
+          { key: 'output_tokens', color: '#14b8a6', label: 'Output' },
+          { key: 'cache_read_tokens', color: '#06b6d4', label: 'Cache Read' },
+        ]
+        const maxVal = Math.max(1, ...rows.flatMap((row) => series.map((s) => Number(row[s.key] || 0))))
+        ctx.strokeStyle = '#e5e9f0'
+        ctx.lineWidth = 1
+        for (let i = 0; i <= 4; i += 1) {
+          const y = pad.top + (plotH / 4) * i
+          ctx.beginPath()
+          ctx.moveTo(pad.left, y)
+          ctx.lineTo(width - pad.right, y)
+          ctx.stroke()
+          ctx.fillStyle = '#667085'
+          ctx.font = '11px system-ui'
+          ctx.textAlign = 'right'
+          ctx.fillText(formatNumber(maxVal - (maxVal / 4) * i), pad.left - 8, y + 4)
+        }
+        series.forEach((s) => {
+          ctx.strokeStyle = s.color
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          rows.forEach((row, index) => {
+            const x = pad.left + (rows.length === 1 ? plotW : (plotW / (rows.length - 1)) * index)
+            const y = pad.top + plotH - (Number(row[s.key] || 0) / maxVal) * plotH
+            if (index === 0) ctx.moveTo(x, y)
+            else ctx.lineTo(x, y)
+          })
+          ctx.stroke()
+        })
+        ctx.fillStyle = '#667085'
+        ctx.font = '11px system-ui'
+        ctx.textAlign = 'center'
+        const labelStep = Math.max(1, Math.ceil(rows.length / 6))
+        rows.forEach((row, index) => {
+          if (index % labelStep !== 0 && index !== rows.length - 1) return
+          const x = pad.left + (rows.length === 1 ? plotW : (plotW / (rows.length - 1)) * index)
+          ctx.fillText(String(row.label || '').slice(-5), x, height - 10)
+        })
+        ctx.textAlign = 'left'
+        series.forEach((s, index) => {
+          const x = pad.left + index * 92
+          ctx.fillStyle = s.color
+          ctx.beginPath()
+          ctx.arc(x, 10, 4, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = '#344054'
+          ctx.fillText(s.label, x + 8, 14)
+        })
+      }
+
+      function drawCanvasEmpty(ctx, width, height, text) {
+        ctx.fillStyle = '#667085'
+        ctx.font = '13px system-ui'
+        ctx.textAlign = 'center'
+        ctx.fillText(text, width / 2, height / 2)
+      }
+
+      function renderModels() {
+        const q = document.getElementById('modelSearch').value.trim().toLowerCase()
+        const kind = document.getElementById('modelKind').value
+        const list = document.getElementById('modelList')
+        const filtered = models.filter((model) => {
+          const text = `${model.id} ${model.name}`.toLowerCase()
+          const matchText = !q || text.includes(q)
+          const matchKind = !kind || inferModelTags(model).some((tag) => tag.key === kind)
+          return matchText && matchKind
+        })
+        if (!filtered.length) {
+          list.innerHTML = '<div class="empty">没有匹配的模型</div>'
+          return
+        }
+        list.innerHTML = filtered
+          .map((model) => {
+            const tags = inferModelTags(model)
+            const statusTag = renderTag(tags.find((tag) => tag.key === 'running') || { key: 'running', label: '运行中' })
+            const footerTags = tags
+              .filter((tag) => tag.key !== 'running')
+              .map(renderTag)
+              .join('')
+            const displayName = model.name || model.id
+            const modelId = model.id || displayName
+            const vendor = inferModelVendor(model)
+            const family = inferModelFamily(model)
+            const capability = primaryCapability(tags)
+            const desc = modelDescription(model, tags)
+            return `
+              <article class="model-card">
+                <div class="model-card-header">
+                  <div class="model-avatar">
+                    <img src="${TONGJI_TAG_ASSET_BASE}/model-gallery.svg" alt="" loading="lazy" />
+                  </div>
+                  <div class="model-heading">
+                    <div class="model-title-line">
+                      <h3 title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</h3>
+                      ${statusTag}
+                    </div>
+                    <div class="model-vendor">${escapeHtml(vendor)} · ${escapeHtml(family)}</div>
+                  </div>
+                </div>
+                <div class="model-card-body">
+                  <p class="model-desc">${escapeHtml(desc)}</p>
+                  <div class="model-meta">
+                    <span>模型 ID</span>
+                    <span class="mono" title="${escapeHtml(modelId)}">${escapeHtml(modelId)}</span>
+                    <span>模型类型</span>
+                    <span>${escapeHtml(capability)}</span>
+                  </div>
+                </div>
+                <div class="model-card-footer">
+                  <div class="tag-row">${footerTags}</div>
+                  <button type="button" class="btn model-copy" data-copy="${escapeHtml(modelId)}" title="复制模型 ID" aria-label="复制模型 ID">${iconCopy()}</button>
+                </div>
+              </article>
+            `
+          })
+          .join('')
+        list.querySelectorAll('[data-copy]').forEach((button) => {
+          button.onclick = async () => {
+            const id = button.getAttribute('data-copy') || ''
+            try {
+              await navigator.clipboard.writeText(id)
+              toast(`已复制模型 ID：${id}`)
+            } catch (_) {
+              toast(id)
+            }
+          }
+        })
+      }
+
+      function ensureDefaultGroup() {
+        if (!config.length) {
+          config.push({
+            use_proxy: false,
+            proxy_host: '',
+            proxy_user: '',
+            proxy_pass: '',
+            fingerprint_id: 'tongji-local',
+            timezone: 'Asia/Shanghai',
+            accounts: [],
+          })
+        }
+      }
+
+      function renderAccounts() {
+        const list = document.getElementById('accountList')
+        const rows = tongjiAccounts()
+        if (!rows.length) {
+          list.innerHTML = '<div class="empty">还没有同济账号。点击“新增账号”后填写学号/工号和密码。</div>'
+          return
+        }
+        list.innerHTML = ''
+        rows.forEach(({ group, groupIndex, account, accountIndex }, rowIndex) => {
+          const auth = account.auth || {}
+          const status = statusFor(group, account)
+          const row = document.createElement('div')
+          row.className = 'account-row'
+          row.innerHTML = `
+            <div class="account-row-head">
+              <strong>${escapeHtml(account.name || `同济账号 ${rowIndex + 1}`)}</strong>
+              <span class="status ${status.cls}">${status.text}</span>
+            </div>
+            <div class="account-fields">
+              <div>
+                <label>账号名称</label>
+                <input value="${escapeHtml(account.name || '')}" data-field="name" placeholder="tongji-01" />
+              </div>
+              <div>
+                <label>同济账号</label>
+                <input value="${escapeHtml(auth.username || '')}" data-field="username" autocomplete="username" placeholder="学号或工号" />
+              </div>
+              <div>
+                <label>密码</label>
+                <input value="${escapeHtml(auth.password || '')}" data-field="password" type="password" autocomplete="current-password" placeholder="同济统一身份认证密码" />
+              </div>
+              <div>
+                <label>工作空间</label>
+                <input value="${escapeHtml(auth.workspace_id || 'personal-example')}" data-field="workspace_id" placeholder="personal-example" />
+              </div>
+            </div>
+            <div class="account-row-head">
+              <label class="switch"><input type="checkbox" data-field="enabled" ${account.enabled !== false ? 'checked' : ''} />启用账号</label>
+              <button type="button" class="btn btn-danger btn-sm" data-action="delete">删除账号</button>
+            </div>
+          `
+          row.querySelector('[data-field="name"]').oninput = (event) => {
+            account.name = event.target.value
+            renderMetrics()
+          }
+          row.querySelector('[data-field="username"]').oninput = (event) => {
+            account.auth = account.auth || {}
+            account.auth.username = event.target.value
+          }
+          row.querySelector('[data-field="password"]').oninput = (event) => {
+            account.auth = account.auth || {}
+            account.auth.password = event.target.value
+          }
+          row.querySelector('[data-field="workspace_id"]').oninput = (event) => {
+            account.auth = account.auth || {}
+            account.auth.workspace_id = event.target.value
+          }
+          row.querySelector('[data-field="enabled"]').onchange = (event) => {
+            account.enabled = event.target.checked
+            renderAll()
+          }
+          row.querySelector('[data-action="delete"]').onclick = () => {
+            const label = account.name || auth.username || `#${rowIndex + 1}`
+            if (!window.confirm(`确认删除同济账号 ${label} 吗？`)) return
+            config[groupIndex].accounts.splice(accountIndex, 1)
+            renderAll()
+          }
+          list.appendChild(row)
+        })
+      }
+
+      function timezoneOptions(current) {
+        const value = current || 'Asia/Shanghai'
+        const values = TIMEZONES.includes(value) ? TIMEZONES : [value, ...TIMEZONES].sort()
+        return values
+          .map((tz) => `<option value="${escapeHtml(tz)}" ${tz === value ? 'selected' : ''}>${escapeHtml(tz)}</option>`)
+          .join('')
+      }
+
+      function renderNetwork() {
+        const list = document.getElementById('proxyList')
+        if (!config.length) {
+          list.innerHTML = '<div class="empty">还没有代理组。直连使用本机出口 IP，代理组用于隔离不同账号的浏览器环境。</div>'
+          return
+        }
+        list.innerHTML = ''
+        config.forEach((group, groupIndex) => {
+          const useProxy = group.use_proxy !== false
+          const tongjiCount = (group.accounts || []).filter((a) => (a.type || '').toLowerCase() === 'tongji').length
+          const row = document.createElement('div')
+          row.className = 'proxy-group'
+          row.innerHTML = `
+            <div class="account-row-head">
+              <strong>代理组 ${groupIndex + 1}</strong>
+              <span class="tag">${tongjiCount} 个同济账号</span>
+            </div>
+            <div class="proxy-fields">
+              <div>
+                <label>网络模式</label>
+                <label class="switch"><input type="checkbox" data-field="use_proxy" ${useProxy ? 'checked' : ''} />代理</label>
+              </div>
+              <div>
+                <label>代理地址</label>
+                <input value="${escapeHtml(group.proxy_host || '')}" data-field="proxy_host" placeholder="host:port" ${useProxy ? '' : 'disabled'} />
+              </div>
+              <div>
+                <label>代理用户</label>
+                <input value="${escapeHtml(group.proxy_user || '')}" data-field="proxy_user" placeholder="username" ${useProxy ? '' : 'disabled'} />
+              </div>
+              <div>
+                <label>代理密码</label>
+                <input value="${escapeHtml(group.proxy_pass || '')}" data-field="proxy_pass" placeholder="password" ${useProxy ? '' : 'disabled'} />
+              </div>
+              <div>
+                <label>指纹 ID</label>
+                <input value="${escapeHtml(group.fingerprint_id || '')}" data-field="fingerprint_id" placeholder="tongji-1" />
+              </div>
+              <div>
+                <label>时区</label>
+                <select data-field="timezone">${timezoneOptions(group.timezone)}</select>
+              </div>
+            </div>
+            <div class="account-row-head">
+              <span class="model-id">${useProxy ? '浏览器将通过代理出口访问同济 MaaS' : '直连模式会使用当前机器出口 IP'}</span>
+              <button type="button" class="btn btn-danger btn-sm" data-action="delete">删除代理组</button>
+            </div>
+          `
+          ;['proxy_host', 'proxy_user', 'proxy_pass', 'fingerprint_id'].forEach((field) => {
+            row.querySelector(`[data-field="${field}"]`).oninput = (event) => {
+              group[field] = event.target.value
+              renderMetrics()
+            }
+          })
+          row.querySelector('[data-field="use_proxy"]').onchange = (event) => {
+            group.use_proxy = event.target.checked
+            renderAll()
+          }
+          row.querySelector('[data-field="timezone"]').onchange = (event) => {
+            group.timezone = event.target.value
+          }
+          row.querySelector('[data-action="delete"]').onclick = () => {
+            if (!window.confirm(`确认删除代理组 ${groupIndex + 1} 吗？组内账号也会删除。`)) return
+            config.splice(groupIndex, 1)
+            renderAll()
+          }
+          list.appendChild(row)
+        })
+      }
+
+      function renderAll() {
+        renderMetrics()
+        renderModels()
+        renderAccounts()
+        renderNetwork()
+        renderUsage()
+        renderApiSettings()
+      }
+
+      function toSavePayload() {
+        return config
+          .map((group) => ({
+            use_proxy: group.use_proxy !== false,
+            proxy_host: (group.proxy_host || '').trim(),
+            proxy_user: (group.proxy_user || '').trim(),
+            proxy_pass: (group.proxy_pass || '').trim(),
+            fingerprint_id: (group.fingerprint_id || '').trim() || 'tongji-local',
+            timezone: (group.timezone || '').trim() || 'Asia/Shanghai',
+            accounts: (group.accounts || [])
+              .map((account) => {
+                if ((account.type || '').toLowerCase() !== 'tongji') {
+                  return {
+                    name: (account.name || '').trim(),
+                    type: (account.type || '').trim(),
+                    enabled: account.enabled !== false,
+                    auth: account.auth || {},
+                    unfreeze_at: account.unfreeze_at ?? null,
+                  }
+                }
+                return {
+                  name: (account.name || account.auth?.username || '').trim(),
+                  type: 'tongji',
+                  enabled: account.enabled !== false,
+                  auth: {
+                    username: String(account.auth?.username || '').trim(),
+                    password: String(account.auth?.password || '').trim(),
+                    workspace_id: String(account.auth?.workspace_id || 'personal-example').trim(),
+                  },
+                  unfreeze_at: account.unfreeze_at ?? null,
+                }
+              })
+              .filter((account) => {
+                if (!account.name || !account.type) return false
+                if (account.type !== 'tongji') return true
+                return account.auth.username && account.auth.password
+              }),
+          }))
+          .filter((group) => group.accounts.length)
+      }
+
+      async function loadAll() {
+        const [configRes, statusRes, modelsRes, adminSettingsRes, usageRes] = await Promise.all([
+          apiFetch(CONFIG_API),
+          apiFetch(STATUS_API).catch(() => null),
+          apiFetch(MODELS_API).catch(() => null),
+          apiFetch(ADMIN_SETTINGS_API).catch(() => null),
+          loadUsageResponse().catch(() => null),
+        ])
+        if (!configRes.ok) throw new Error(await configRes.text())
+        config = (await configRes.json()).map(normalizeGroup)
+        if (statusRes && statusRes.ok) {
+          const payload = await statusRes.json()
+          runtimeStatus = payload.accounts || {}
+          runtimeNow = Number(payload.now || Math.trunc(Date.now() / 1000))
+        }
+        if (modelsRes && modelsRes.ok) {
+          const payload = await modelsRes.json()
+          models = Array.isArray(payload.models) ? payload.models : []
+        }
+        if (adminSettingsRes && adminSettingsRes.ok) {
+          apiSettings = await adminSettingsRes.json()
+        }
+        if (usageRes && usageRes.ok) {
+          usage = await usageRes.json()
+        }
+        renderAll()
+      }
+
+      function usageQuery() {
+        const days = document.getElementById('usageDays')?.value || '7'
+        const granularity = document.getElementById('usageGranularity')?.value || 'day'
+        return `${USAGE_API}?days=${encodeURIComponent(days)}&granularity=${encodeURIComponent(granularity)}`
+      }
+
+      function loadUsageResponse() {
+        return apiFetch(usageQuery())
+      }
+
+      async function loadUsage() {
+        const res = await loadUsageResponse()
+        if (!res.ok) throw new Error(await res.text())
+        usage = await res.json()
+        renderUsage()
+      }
+
+      async function saveConfig() {
+        const payload = toSavePayload()
+        const hasTongjiAccount = payload.some((group) =>
+          group.accounts.some((account) => account.type === 'tongji')
+        )
+        if (!payload.length || !hasTongjiAccount) {
+          toast('请至少填写一个完整的同济账号', 'error')
+          return
+        }
+        const res = await apiFetch(CONFIG_API, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const text = await res.text()
+        if (!res.ok) throw new Error(text || '保存失败')
+        toast('配置已保存并生效')
+        await loadAll()
+      }
+
+      async function saveApiSettings() {
+        const apiKey = document.getElementById('apiKeyInput').value.trim()
+        const res = await apiFetch(ADMIN_SETTINGS_API, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: apiKey }),
+        })
+        const text = await res.text()
+        if (!res.ok) throw new Error(text || '保存失败')
+        apiSettings = JSON.parse(text || '{}')
+        renderApiSettings()
+        toast('API Key 已保存')
+      }
+
+      function generateStrongApiKey() {
+        if (!window.crypto || !window.crypto.getRandomValues) {
+          toast('当前浏览器不支持安全随机数生成', 'error')
+          return
+        }
+        const bytes = new Uint8Array(32)
+        window.crypto.getRandomValues(bytes)
+        const key = `w2a-${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
+        document.getElementById('apiKeyInput').value = key
+        toast('已生成高强度 API Key，请保存后生效')
+      }
+
+      function switchSection(section) {
+        document.querySelectorAll('.nav button').forEach((button) => {
+          button.classList.toggle('active', button.dataset.section === section)
+        })
+        document.querySelectorAll('.section').forEach((el) => {
+          el.classList.toggle('active', el.id === `section-${section}`)
+        })
+        const titles = {
+          models: ['模型广场', '浏览同济 MaaS 当前可用模型，并复制 OpenAI 兼容模型名。'],
+          usage: ['用量统计', '查看本地记录的请求、Token 估算、模型分布和响应时间。'],
+          accounts: ['同济账号登录', '使用同济统一身份认证账号维护 MaaS 登录信息。'],
+          network: ['代理设置', '管理浏览器出口、指纹 ID 和时区。'],
+          api: ['API 设置', '维护 OpenAI 兼容端点和客户端鉴权 API Key。'],
+        }
+        document.getElementById('pageTitle').textContent = titles[section][0]
+        document.getElementById('pageSubtitle').textContent = titles[section][1]
+      }
+
+      document.querySelectorAll('.nav button').forEach((button) => {
+        button.onclick = () => switchSection(button.dataset.section)
+      })
+
+      document.getElementById('addTongjiAccount').onclick = () => {
+        ensureDefaultGroup()
+        config[0].accounts.push({
+          name: '',
+          type: 'tongji',
+          enabled: true,
+          auth: { username: '', password: '', workspace_id: 'personal-example' },
+          unfreeze_at: null,
+        })
+        switchSection('accounts')
+        renderAll()
+      }
+
+      document.getElementById('addProxyGroup').onclick = () => {
+        config.push({
+          use_proxy: true,
+          proxy_host: '',
+          proxy_user: '',
+          proxy_pass: '',
+          fingerprint_id: `tongji-${config.length + 1}`,
+          timezone: 'Asia/Shanghai',
+          accounts: [],
+        })
+        renderAll()
+      }
+
+      document.getElementById('modelSearch').oninput = renderModels
+      document.getElementById('modelKind').onchange = renderModels
+      document.getElementById('usageDays').onchange = () => loadUsage().catch((err) => toast(err.message, 'error'))
+      document.getElementById('usageGranularity').onchange = () => loadUsage().catch((err) => toast(err.message, 'error'))
+      document.getElementById('refreshUsage').onclick = () => loadUsage().then(() => toast('用量统计已刷新')).catch((err) => toast(err.message, 'error'))
+      document.getElementById('saveApiSettings').onclick = () => saveApiSettings().catch((err) => toast(err.message, 'error'))
+      document.getElementById('generateApiKey').onclick = generateStrongApiKey
+      document.getElementById('copyApiKey').onclick = () => {
+        const value = document.getElementById('apiKeyInput').value.trim() || apiSettings.default_api_key || 'tongji-api-key'
+        copyText(value, '已复制 API Key')
+      }
+      document.getElementById('reloadSide').onclick = () => loadAll().then(() => toast('已重新加载')).catch((err) => toast(err.message, 'error'))
+      document.getElementById('saveSide').onclick = () => saveConfig().catch((err) => toast(err.message, 'error'))
+      document.getElementById('logoutSide').onclick = async () => {
+        try {
+          await fetch('/api/admin/logout', { method: 'POST' })
+        } catch (_) {}
+        window.location.href = '/login'
+      }
+
+      initConnectionBar()
+
+      loadAll().catch((err) => {
+        config = []
+        models = []
+        renderAll()
+        toast(err.message || '加载失败', 'error')
+      })
+
+      setInterval(async () => {
+        try {
+          const res = await apiFetch(STATUS_API)
+          if (!res.ok) return
+          const payload = await res.json()
+          runtimeStatus = payload.accounts || {}
+          runtimeNow = Number(payload.now || Math.trunc(Date.now() / 1000))
+          renderMetrics()
+          renderAccounts()
+        } catch (_) {}
+      }, 15000)
+    </script>
+  </body>
+</html>
