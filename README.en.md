@@ -16,20 +16,6 @@ The repository currently includes a built-in `tongji` plugin and a general plugi
 - Browser session reuse
 - Web config UI for API keys, admin password, proxy groups, accounts, and models
 
-## Security
-
-This project stores web account credentials, proxy settings, and local browser profiles. Do not commit:
-
-- `db.sqlite3`
-- `docker-data/`
-- `config.local.yaml`
-- `.env`
-- browser profiles / cookies / storage state
-- real accounts, passwords, session keys, API keys, proxy credentials
-- debug logs or real conversations
-
-The checked-in `config.yaml` is a safe default template. Runtime configuration should live in `config.local.yaml`, which is ignored by Git.
-
 ## Quick Start
 
 ### Run From Source

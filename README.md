@@ -31,20 +31,6 @@ Web2API 是一个把网页端 AI 服务包装成 OpenAI / Anthropic 兼容接口
 
 ![Alma vision test](assets/README/alma-vision-test.png)
 
-## 安全说明
-
-这个项目会保存网页账号认证信息、代理配置和本地浏览器 profile。公开仓库里不要提交：
-
-- `db.sqlite3`
-- `docker-data/`
-- `config.local.yaml`
-- `.env`
-- 浏览器 profile / cookies / storage state
-- 真实账号、密码、sessionKey、API key、代理账密
-- 调试日志和真实对话内容
-
-仓库里的 `config.yaml` 是安全默认模板。实际运行时建议使用自动生成的 `config.local.yaml`，它已被 `.gitignore` 忽略。
-
 ## 快速开始
 
 ### 方式一：源码启动
