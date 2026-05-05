@@ -1660,7 +1660,7 @@
               </div>
               <div>
                 <label>工作空间</label>
-                <input value="${escapeHtml(auth.workspace_id || 'personal-example')}" data-field="workspace_id" placeholder="personal-example" />
+                <input value="${escapeHtml(auth.workspace_id || '')}" data-field="workspace_id" placeholder="留空自动识别" />
               </div>
             </div>
             <div class="account-row-head">
@@ -1812,7 +1812,7 @@
                   auth: {
                     username: String(account.auth?.username || '').trim(),
                     password: String(account.auth?.password || '').trim(),
-                    workspace_id: String(account.auth?.workspace_id || 'personal-example').trim(),
+                    workspace_id: String(account.auth?.workspace_id || '').trim(),
                   },
                   unfreeze_at: account.unfreeze_at ?? null,
                 }
@@ -1945,7 +1945,7 @@
           name: '',
           type: 'tongji',
           enabled: true,
-          auth: { username: '', password: '', workspace_id: 'personal-example' },
+          auth: { username: '', password: '', workspace_id: '' },
           unfreeze_at: null,
         })
         switchSection('accounts')

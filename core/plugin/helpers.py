@@ -21,17 +21,22 @@ logger = logging.getLogger(__name__)
 # 在页面内 POST 请求并流式回传：成功时逐块发送响应体，失败时发送 __error__: 前缀 + 信息，最后发送 __done__
 # bindingName 按请求唯一，同一 page 多并发时互不串数据
 PAGE_FETCH_STREAM_JS = """
-async ({ url, body, bindingName }) => {
+async ({ url, body, bindingName, headers, fetchTimeoutMs }) => {
   const send = globalThis[bindingName];
   const done = "__done__";
   const errPrefix = "__error__:";
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 90000);
+    const timeoutMs = fetchTimeoutMs || 90000;
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const requestHeaders = Object.assign(
+      { "Content-Type": "application/json", "Accept": "text/event-stream" },
+      headers || {}
+    );
     const resp = await fetch(url, {
       method: "POST",
       body: body,
-      headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+      headers: requestHeaders,
       credentials: "include",
       signal: ctrl.signal
     });
@@ -59,7 +64,7 @@ async ({ url, body, bindingName }) => {
       await send(dec.decode(value));
     }
   } catch (e) {
-    const msg = e.name === "AbortError" ? "请求超时(90s)" : (e.message || String(e));
+    const msg = e.name === "AbortError" ? "请求超时(" + Math.floor((fetchTimeoutMs || 90000) / 1000) + "s)" : (e.message || String(e));
     await send(errPrefix + msg);
   }
   await send(done);
@@ -398,6 +403,7 @@ async def stream_raw_via_page_fetch(
     on_http_error: Callable[[str, dict[str, str] | None], int | None] | None = None,
     on_headers: Callable[[dict[str, str]], None] | None = None,
     error_state: dict[str, bool] | None = None,
+    headers: dict[str, str] | None = None,
     fetch_timeout: int = 90,
     read_timeout: float = 130.0,
 ) -> AsyncIterator[str]:
@@ -409,6 +415,7 @@ async def stream_raw_via_page_fetch(
     """
     chunk_queue: asyncio.Queue[str] = asyncio.Queue()
     BINDING_NAME = "sendChunk_" + request_id
+    request_headers = dict(headers or {})
 
     def on_binding_called(event: dict[str, Any]) -> None:
         name = event.get("name")
@@ -433,12 +440,18 @@ async def stream_raw_via_page_fetch(
         async def run_fetch() -> None:
             await page.evaluate(
                 PAGE_FETCH_STREAM_JS,
-                {"url": url, "body": body, "bindingName": BINDING_NAME},
+                {
+                    "url": url,
+                    "body": body,
+                    "bindingName": BINDING_NAME,
+                    "headers": request_headers,
+                    "fetchTimeoutMs": int(fetch_timeout * 1000),
+                },
             )
 
         fetch_task = asyncio.create_task(run_fetch())
         try:
-            headers = None
+            response_headers = None
             while True:
                 try:
                     chunk = await asyncio.wait_for(
@@ -451,9 +464,11 @@ async def stream_raw_via_page_fetch(
                     break
                 if chunk.startswith("__headers__:"):
                     try:
-                        headers = json.loads(chunk[12:])
-                        if on_headers and isinstance(headers, dict):
-                            on_headers({k: str(v) for k, v in headers.items()})
+                        response_headers = json.loads(chunk[12:])
+                        if on_headers and isinstance(response_headers, dict):
+                            on_headers(
+                                {k: str(v) for k, v in response_headers.items()}
+                            )
                     except (json.JSONDecodeError, TypeError) as e:
                         logger.debug("[fetch] 解析 __headers__ 失败: %s", e)
                     continue
@@ -461,7 +476,7 @@ async def stream_raw_via_page_fetch(
                     msg = chunk[10:].strip()
                     saw_terminal = bool(error_state and error_state.get("terminal"))
                     if on_http_error:
-                        unfreeze_at = on_http_error(msg, headers)
+                        unfreeze_at = on_http_error(msg, response_headers)
                         if isinstance(unfreeze_at, int):
                             logger.warning("[fetch] __error__ from page: %s", msg)
                             raise AccountFrozenError(msg, unfreeze_at)

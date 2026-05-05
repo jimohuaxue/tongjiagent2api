@@ -46,13 +46,11 @@ browser:
   chromium_bin: ''
 
   # 是否启用无头模式（headless）/ Whether to enable headless mode
-  # 默认 false。优先推荐 Linux + Xvfb，这样仍然是"有界面浏览器"，兼容性更稳。
-  # Default false. Linux + Xvfb is preferred — keeps a visible browser with better compatibility.
-  # headless 只建议用于检测不严格、页面行为简单的平台。
-  # Headless is only recommended for platforms with lenient detection and simple page behavior.
-  # 对 Claude 这类检测更严格的平台，不推荐优先开启；可能出现扩展失效、登录态异常或更高风控风险。
-  # Not recommended for stricter platforms like Claude; may cause extension failures, session issues, or higher risk triggers.
-  headless: false
+  # 默认 true。同济插件支持账密自动登录，适合后台无界面运行。
+  # Default true. The Tongji plugin supports automatic username/password login for background operation.
+  # 如果需要手动观察登录页或排查浏览器行为，可在 config.local.yaml 中改为 false。
+  # Set this to false in config.local.yaml when you need to inspect login pages or browser behavior manually.
+  headless: true
 
   # 是否禁用 Chromium sandbox / Whether to disable Chromium sandbox
   # 默认 false。只有在 Docker 等受限环境、且浏览器因 sandbox 无法启动时再开启。

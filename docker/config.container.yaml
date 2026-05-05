@@ -24,8 +24,8 @@ browser:
   # Fixed path to fingerprint-chromium inside the container
   chromium_bin: '/opt/fingerprint-chromium/chrome'
 
-  # Headless mode; Xvfb virtual display is used by default
-  headless: false
+  # Headless mode; the Tongji plugin supports automatic login without a visible browser
+  headless: true
 
   # Disable sandbox inside containers to prevent Chromium startup failures due to permission restrictions
   no_sandbox: true

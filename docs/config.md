@@ -58,6 +58,22 @@ Linux 示例：`/opt/fingerprint-chromium/chrome`、`/usr/bin/chromium` 或 `/us
 
 macOS 示例：`/Applications/Chromium.app/Contents/MacOS/Chromium`
 
+### 无头模式
+
+同济插件支持账密自动登录，默认以无头模式启动 Chromium，适合后台运行：
+
+```yaml
+browser:
+  headless: true
+```
+
+如果需要手动观察登录页、验证码/风控提示或排查浏览器行为，可以在 `config.local.yaml` 中改为：
+
+```yaml
+browser:
+  headless: false
+```
+
 ### Linux / Docker 兼容参数
 
 如果浏览器在 Linux / Docker 环境里启动后立刻关闭，可以尝试：

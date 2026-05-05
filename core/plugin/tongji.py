@@ -7,7 +7,7 @@ auth 字段需包含：
   - password: 密码
 
 可选 auth 字段（不填则使用默认值）：
-  - workspace_id: 工作空间 ID，默认 personal-example（请在配置页替换为自己的工作空间）
+  - workspace_id: 工作空间 ID；留空 / auto 时从登录后的页面 URL 自动识别
 
 支持的模型（动态从 ListModelByPublic 刷新，冷启动时使用以下静态列表）：
   gemma-4-26b, gemma-4-31b, intern-s1-pro, glm-5.1,
@@ -21,6 +21,7 @@ auth 字段需包含：
 import hashlib
 import json
 import logging
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -90,6 +91,7 @@ _BASE_URL = "https://agent.tongji.edu.cn"
 _LOGIN_URL = f"{_BASE_URL}/login"
 
 _DEFAULT_WORKSPACE_ID = "personal-example"
+_AUTO_WORKSPACE_VALUES = {"", "auto", "personal-example"}
 _DEFAULT_MODEL_KEY = "glm-5.1"
 
 _API_BASE = f"{_BASE_URL}/api/aigw"
@@ -123,6 +125,68 @@ _CSRF_TOKEN_JS = """
   return decodeURIComponent(token);
 }
 """
+
+_WORKSPACE_ID_JS = """
+() => {
+  const isAutoValue = (value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    return !normalized || normalized === "auto" || normalized === "personal-example";
+  };
+  const patterns = [
+    /\\/personal\\/([^/?#]+)/,
+    /["']WorkspaceID["']\\s*:\\s*["']([^"']+)["']/,
+    /["']workspaceID["']\\s*:\\s*["']([^"']+)["']/,
+    /["']workspaceId["']\\s*:\\s*["']([^"']+)["']/,
+  ];
+  const candidates = [
+    window.location.href,
+    document.body ? document.body.innerText : "",
+    ...Object.keys(window.localStorage || {}).flatMap((key) => {
+      try { return [key, window.localStorage.getItem(key) || ""]; } catch (_) { return [key]; }
+    }),
+    ...Object.keys(window.sessionStorage || {}).flatMap((key) => {
+      try { return [key, window.sessionStorage.getItem(key) || ""]; } catch (_) { return [key]; }
+    }),
+  ];
+  for (const text of candidates) {
+    if (!text) continue;
+    for (const pattern of patterns) {
+      const match = String(text).match(pattern);
+      if (match && match[1]) {
+        const value = decodeURIComponent(match[1]);
+        if (!isAutoValue(value)) return value;
+      }
+    }
+  }
+  return "";
+}
+"""
+
+
+def _normalize_workspace_id(value: Any) -> str:
+    workspace_id = str(value or "").strip()
+    return "" if workspace_id.lower() in _AUTO_WORKSPACE_VALUES else workspace_id
+
+
+def _workspace_id_from_url(url: str) -> str:
+    match = re.search(r"/personal/([^/?#]+)", url or "")
+    if not match:
+        return ""
+    return urllib.parse.unquote(match.group(1))
+
+
+async def _detect_workspace_id(page: Page) -> str:
+    workspace_id = _normalize_workspace_id(_workspace_id_from_url(page.url))
+    if workspace_id:
+        return workspace_id
+    try:
+        detected = str(await page.evaluate(_WORKSPACE_ID_JS) or "").strip()
+    except Exception as e:
+        logger.debug("[tongji] 自动识别工作空间失败: %s", e)
+        return ""
+    if detected.lower() in _AUTO_WORKSPACE_VALUES:
+        return ""
+    return detected
 
 # ---------------------------------------------------------------------------
 # 静态模型目录（冷启动 / 动态刷新失败时的兜底）
@@ -269,16 +333,68 @@ class TongjiPlugin(AbstractPlugin):
         """返回 OpenAI 兼容模型名 → 平台模型显示名的映射，用于 /v1/models 列表。"""
         return {k: v["name"] for k, v in self._catalog().items()}
 
+    async def _workspace_id_for_request(
+        self,
+        context: BrowserContext,
+        page: Page,
+    ) -> str:
+        cfg = self._context_config.get(id(context)) or {}
+        workspace_id = _normalize_workspace_id(cfg.get("workspace_id"))
+        if workspace_id:
+            return workspace_id
+        detected = await _detect_workspace_id(page)
+        workspace_id = detected or _DEFAULT_WORKSPACE_ID
+        self._context_config[id(context)] = {"workspace_id": workspace_id}
+        if detected:
+            logger.info("[tongji] 已自动识别工作空间: %s", workspace_id)
+        else:
+            logger.warning("[tongji] 未自动识别到工作空间，使用默认 %s", workspace_id)
+        return workspace_id
+
+    async def _csrf_headers(
+        self,
+        page: Page,
+        *,
+        accept: str | None = None,
+    ) -> dict[str, str]:
+        csrf_token = str(await page.evaluate(_CSRF_TOKEN_JS) or "")
+        if not csrf_token:
+            raise RuntimeError("[tongji] 未能从 cookie 读取 x-csrf-token")
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrf_token,
+            "X-Top-Region": "cn-north-1",
+            "Origin": _BASE_URL,
+            "Referer": page.url or f"{_BASE_URL}/",
+        }
+        if accept:
+            headers["Accept"] = accept
+        return headers
+
+    async def _request_aigw_json(
+        self,
+        page: Page,
+        url: str,
+        body: str,
+        *,
+        timeout_ms: int = 15000,
+    ) -> dict[str, Any]:
+        return await request_json_via_page_fetch(
+            page,
+            url,
+            method="POST",
+            body=body,
+            headers=await self._csrf_headers(page),
+            timeout_ms=timeout_ms,
+        )
+
     async def _refresh_model_catalog(self, page: Page) -> None:
         """调用 ListModelByPublic 刷新模型目录（仅保留 text-generation 类型）。"""
         url = f"{_API_BASE}?Action=ListModelByPublic&{_API_VER}"
         body = json.dumps({"PageNum": 1, "PageSize": 100})
         try:
-            resp = await request_json_via_page_fetch(
-                page, url, method="POST", body=body,
-                headers={"Content-Type": "application/json"},
-                timeout_ms=15000,
-            )
+            resp = await self._request_aigw_json(page, url, body, timeout_ms=15000)
         except Exception as e:
             logger.warning("[tongji] ListModelByPublic 请求失败: %s", e)
             return
@@ -341,7 +457,8 @@ class TongjiPlugin(AbstractPlugin):
         if not username or not password:
             raise ValueError("[tongji] auth 须包含 username 和 password")
 
-        workspace_id = str(auth.get("workspace_id") or _DEFAULT_WORKSPACE_ID)
+        workspace_id = _normalize_workspace_id(auth.get("workspace_id"))
+        target_workspace_id = workspace_id or _DEFAULT_WORKSPACE_ID
 
         if not await self._is_logged_in(page):
             logger.info("[tongji] 开始 SSO 登录，username=%s", username)
@@ -411,7 +528,7 @@ class TongjiPlugin(AbstractPlugin):
                 raise RuntimeError("SSO 登录失败，无法确认登录状态")
 
             await page.goto(
-                f"{_BASE_URL}/product/maas/personal/{workspace_id}/experience",
+                f"{_BASE_URL}/product/maas/personal/{target_workspace_id}/experience",
                 wait_until="networkidle",
                 timeout=30000,
             )
@@ -421,6 +538,21 @@ class TongjiPlugin(AbstractPlugin):
 
         if not await self._is_logged_in(page):
             raise RuntimeError(f"SSO 登录后仍未确认登录状态，当前 URL: {page.url}")
+
+        detected_workspace_id = await _detect_workspace_id(page)
+        if not workspace_id and not detected_workspace_id:
+            try:
+                await page.goto(
+                    f"{_BASE_URL}/product/maas/personal/{_DEFAULT_WORKSPACE_ID}/experience",
+                    wait_until="networkidle",
+                    timeout=30000,
+                )
+                detected_workspace_id = await _detect_workspace_id(page)
+            except Exception as e:
+                logger.debug("[tongji] 工作空间自动识别兜底跳转失败: %s", e)
+        if not workspace_id and detected_workspace_id:
+            workspace_id = detected_workspace_id
+            logger.info("[tongji] 已自动识别工作空间: %s", workspace_id)
 
         self._context_config[id(context)] = {"workspace_id": workspace_id}
 
@@ -435,8 +567,7 @@ class TongjiPlugin(AbstractPlugin):
         page: Page,
         **kwargs: Any,
     ) -> str | None:
-        cfg = self._context_config.get(id(context)) or {}
-        workspace_id = cfg.get("workspace_id") or _DEFAULT_WORKSPACE_ID
+        workspace_id = await self._workspace_id_for_request(context, page)
 
         # 从 kwargs 中读取请求指定的模型名（由 chat_handler 传入）
         model_info = self._resolve_model(kwargs.get("model") or _DEFAULT_MODEL_KEY)
@@ -457,11 +588,7 @@ class TongjiPlugin(AbstractPlugin):
                 "Source": "custom",
             }],
         })
-        resp = await request_json_via_page_fetch(
-            page, url, method="POST", body=body,
-            headers={"Content-Type": "application/json"},
-            timeout_ms=20000,
-        )
+        resp = await self._request_aigw_json(page, url, body, timeout_ms=20000)
         data = resp.get("json") or {}
         meta = data.get("ResponseMetadata") or {}
         if meta.get("Error"):
@@ -658,10 +785,8 @@ class TongjiPlugin(AbstractPlugin):
             "MessageList": [msg_entry],
             "WorkspaceID": workspace_id,
         })
-        resp = await request_json_via_page_fetch(
-            page, batch_url, method="POST", body=batch_body,
-            headers={"Content-Type": "application/json"},
-            timeout_ms=20000,
+        resp = await self._request_aigw_json(
+            page, batch_url, batch_body, timeout_ms=20000
         )
         data = resp.get("json") or {}
         msg_list = (data.get("Result") or {}).get("MessageList") or []
@@ -686,6 +811,7 @@ class TongjiPlugin(AbstractPlugin):
         async for chunk in stream_raw_via_page_fetch(
             context, page, chat_url, chat_body, request_id,
             on_http_error=_on_http_error,
+            headers=await self._csrf_headers(page, accept="text/event-stream"),
         ):
             buffer += chunk
             while "\n" in buffer:

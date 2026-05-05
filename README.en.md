@@ -81,7 +81,7 @@ auth:
 
 browser:
   chromium_bin: ''
-  headless: false
+  headless: true
   no_sandbox: false
   disable_gpu: false
 ```
@@ -91,6 +91,7 @@ Notes:
 - Empty `auth.api_key` uses the default `tongji-api-key`
 - Empty `auth.config_secret` enables first-run admin password setup at `/login`
 - Leave `browser.chromium_bin` empty to auto-detect common paths and PATH commands, or set it to your browser executable path
+- `browser.headless` is enabled by default; set it to `false` in `config.local.yaml` when you need to inspect login pages or browser behavior
 - Docker uses `/opt/fingerprint-chromium/chrome`
 
 ## API Examples

@@ -59,7 +59,7 @@ class ApiSettingsRequest(BaseModel):
 class TongjiLoginRequest(BaseModel):
     username: str
     password: str
-    workspace_id: str | None = "personal-example"
+    workspace_id: str | None = ""
     account_name: str | None = "tongji-main"
     fingerprint_id: str | None = "tongji-local"
 
@@ -83,7 +83,7 @@ def _admin_login_response(request: Request, body: dict[str, Any]) -> JSONRespons
 def _ensure_tongji_account(raw: list[dict[str, Any]], payload: TongjiLoginRequest) -> None:
     username = payload.username.strip()
     password = payload.password.strip()
-    workspace_id = (payload.workspace_id or "personal-example").strip() or "personal-example"
+    workspace_id = (payload.workspace_id or "").strip()
     account_name = (payload.account_name or "tongji-main").strip() or "tongji-main"
     fingerprint_id = (payload.fingerprint_id or "tongji-local").strip() or "tongji-local"
 
