@@ -37,10 +37,12 @@ auth:
 browser:
   # 指纹浏览器（fingerprint-chromium）可执行文件路径
   # Path to the fingerprint-chromium executable
-  # 留空则使用默认值：macOS /Applications/Chromium.app/Contents/MacOS/Chromium
-  # Leave empty to use the default: macOS /Applications/Chromium.app/Contents/MacOS/Chromium
-  # Linux 示例：/usr/bin/chromium 或 /opt/fingerprint-chromium/chrome
-  # Linux examples: /usr/bin/chromium or /opt/fingerprint-chromium/chrome
+  # 留空则按当前系统自动探测常见路径和 PATH 命令
+  # Leave empty to auto-detect common paths and PATH commands for the current OS
+  # Linux 示例：/opt/fingerprint-chromium/chrome、/usr/bin/chromium 或 /usr/bin/google-chrome
+  # Linux examples: /opt/fingerprint-chromium/chrome, /usr/bin/chromium, or /usr/bin/google-chrome
+  # macOS 示例：/Applications/Chromium.app/Contents/MacOS/Chromium
+  # macOS example: /Applications/Chromium.app/Contents/MacOS/Chromium
   chromium_bin: ''
 
   # 是否启用无头模式（headless）/ Whether to enable headless mode

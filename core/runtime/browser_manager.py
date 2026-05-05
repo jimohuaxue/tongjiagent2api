@@ -28,7 +28,15 @@ if TYPE_CHECKING:
 
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
-from core.constants import CDP_PORT_RANGE, CHROMIUM_BIN, TIMEZONE, user_data_dir
+from core.constants import (
+    CDP_PORT_RANGE,
+    CHROMIUM_BIN,
+    TIMEZONE,
+    chromium_bin_missing_message,
+    is_chromium_executable,
+    resolve_chromium_bin,
+    user_data_dir,
+)
 from core.runtime.keys import ProxyKey
 
 logger = logging.getLogger(__name__)
@@ -139,7 +147,7 @@ class BrowserManager:
         cdp_wait_connect_timeout_seconds: float = 2.0,
         download_dir: str | Path | None = None,
     ) -> None:
-        self._chromium_bin = chromium_bin
+        self._chromium_bin = resolve_chromium_bin(chromium_bin)
         self._headless = headless
         self._no_sandbox = no_sandbox
         self._disable_gpu = disable_gpu
@@ -223,8 +231,8 @@ class BrowserManager:
         udd = user_data_dir(proxy_key.fingerprint_id)
         udd.mkdir(parents=True, exist_ok=True)
 
-        if not Path(self._chromium_bin).exists():
-            raise RuntimeError(f"Chromium 不存在: {self._chromium_bin}")
+        if not is_chromium_executable(self._chromium_bin):
+            raise RuntimeError(chromium_bin_missing_message(self._chromium_bin))
 
         args = [
             self._chromium_bin,

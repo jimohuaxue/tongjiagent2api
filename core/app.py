@@ -26,7 +26,7 @@ from core.api.config_routes import create_config_router
 from core.api.chat_handler import ChatHandler
 from core.config.repository import ConfigRepository
 from core.config.settings import get, get_bool
-from core.constants import CDP_PORT_RANGE, CHROMIUM_BIN
+from core.constants import CDP_PORT_RANGE, resolve_chromium_bin
 from core.plugin.base import PluginRegistry
 from core.plugin.tongji import register_tongji_plugin
 from core.runtime.browser_manager import BrowserManager
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     init_usage_schema()
     groups = repo.load_groups()
 
-    chromium_bin = (get("browser", "chromium_bin") or "").strip() or CHROMIUM_BIN
+    chromium_bin = resolve_chromium_bin(get("browser", "chromium_bin"))
     headless = get_bool("browser", "headless", False)
     no_sandbox = get_bool("browser", "no_sandbox", False)
     disable_gpu = get_bool("browser", "disable_gpu", False)

@@ -126,7 +126,7 @@ browser:
 
 - `auth.api_key` 为空时使用默认值 `tongji-api-key`
 - `auth.config_secret` 为空时，首次访问 `/login` 初始化控制台密码
-- `browser.chromium_bin` 为空时使用代码默认路径；建议在配置页或 `config.local.yaml` 中改成你的 Chromium 路径
+- `browser.chromium_bin` 为空时会按当前系统自动探测常见路径和 PATH 命令；探测失败时请在配置页或 `config.local.yaml` 中改成你的 Chromium 路径
 - Docker 内默认使用 `/opt/fingerprint-chromium/chrome`
 
 更多配置见 [docs/config.md](docs/config.md)。
@@ -148,6 +148,12 @@ http://127.0.0.1:9000/config
 - 浏览器参数
 
 账号认证字段由具体插件决定。内置 `tongji` 插件支持在配置页登录和保存账号。
+
+账号和代理组不会直接写入 `config.yaml`，而是保存在 SQLite 数据库中：
+
+- 源码运行默认位置：项目根目录 `db.sqlite3`
+- Docker 运行默认位置：宿主机 `./docker-data/db.sqlite3`，容器内 `/data/db.sqlite3`
+- 可通过 `WEB2API_DB_PATH` 环境变量指定其他路径
 
 ## API 示例
 

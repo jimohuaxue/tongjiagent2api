@@ -28,16 +28,35 @@ server:
   port: 9000
 ```
 
+### 账号存储位置
+
+代理组和账号不直接写在 `config.yaml`，而是保存在 SQLite 数据库里：
+
+- 源码运行默认位置：项目根目录的 `db.sqlite3`
+- Docker 运行默认位置：容器内 `/data/db.sqlite3`，对应宿主机 `./docker-data/db.sqlite3`
+- 可通过环境变量 `WEB2API_DB_PATH` 指定其他数据库路径
+
+数据库内主要使用两张表：
+
+- `proxy_group`：保存代理地址、代理账号密码、`fingerprint_id`、是否启用代理、时区
+- `account`：保存账号 `name`、`type`、认证信息 `auth` JSON、启用状态、冻结到期时间
+
+配置页 `/config` 中保存的代理组和账号信息，最终都会写入这个 SQLite 数据库。
+
 ### 浏览器路径
 
-你至少要确认这一项是对的：
+默认可以留空，程序会按当前系统自动探测常见路径和 PATH 里的浏览器命令：
 
 ```yaml
 browser:
-  chromium_bin: '/Applications/Chromium.app/Contents/MacOS/Chromium'
+  chromium_bin: ''
 ```
 
-Linux 示例：`/usr/bin/chromium` 或 `/opt/fingerprint-chromium/chrome`
+如果自动探测失败，手动填写真实的可执行文件路径。
+
+Linux 示例：`/opt/fingerprint-chromium/chrome`、`/usr/bin/chromium` 或 `/usr/bin/google-chrome`
+
+macOS 示例：`/Applications/Chromium.app/Contents/MacOS/Chromium`
 
 ### Linux / Docker 兼容参数
 

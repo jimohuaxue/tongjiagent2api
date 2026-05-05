@@ -90,7 +90,7 @@ Notes:
 
 - Empty `auth.api_key` uses the default `tongji-api-key`
 - Empty `auth.config_secret` enables first-run admin password setup at `/login`
-- Set `browser.chromium_bin` to your browser executable path
+- Leave `browser.chromium_bin` empty to auto-detect common paths and PATH commands, or set it to your browser executable path
 - Docker uses `/opt/fingerprint-chromium/chrome`
 
 ## API Examples
